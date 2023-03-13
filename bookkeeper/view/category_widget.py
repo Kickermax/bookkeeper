@@ -1,6 +1,9 @@
 """
 Модуль содержит класс виджета категорий для отображения информации о категориях списком.
 """
+from typing import List
+
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
@@ -12,22 +15,20 @@ from PyQt6.QtWidgets import (
 )
 
 
+class Signal:
+    pass
+
+
 class CategoryWidget(QWidget):
     """
     Виджет для отображения списка категорий.
     """
+    category_name_edited = pyqtSignal(str, str)
+    delete_category_signal = pyqtSignal(str)
+    add_category_signal = pyqtSignal(str)
 
     def __init__(self) -> None:
         super().__init__()
-
-        # просто для примера
-        self.categories = [
-            "Еда",
-            "Транспорт",
-            "Развлечения",
-            "Дом",
-            "Другое"
-        ]
 
         self.setup_ui()
 
@@ -37,9 +38,6 @@ class CategoryWidget(QWidget):
         """
         # создаёт QListWidget для отображения списка категорий
         self.list = QListWidget()
-
-        # заполняет список данными категорий
-        self.list.addItems(self.categories)
 
         # line для редактирования имени категории
         self.name_edit = QLineEdit()
@@ -75,6 +73,25 @@ class CategoryWidget(QWidget):
         # отключает кнопку добавления
         self.add_button.setEnabled(False)
 
+    def init_category_list(self, categories: List[str]) -> None:
+        """
+        Инициализирует список, на котором будут
+        отображаться данные о категориях.
+        """
+        self.list.clear()
+
+        # сортирует категории по алфавиту
+        categories = sorted(categories)
+
+        # проверяет существование категория "Удалено"
+        if "Удалено" in categories:
+            categories.remove("Удалено")
+            categories.append("Удалено")
+
+        for category_name in categories:
+            item = QListWidgetItem(category_name)
+            self.list.addItem(item)
+
     def on_add_button_clicked(self) -> None:
         """
         Добавляет новую строку в список, ЕСЛИ текстовое поле
@@ -84,9 +101,8 @@ class CategoryWidget(QWidget):
         if name:
             # проверяет нет ли категории в списке
             categories = [self.list.item(i).text() for i in range(self.list.count())]
-            print(categories)
             if name not in categories:
-                self.list.addItem(name)
+                self.add_category_signal.emit(name)
             self.name_edit.clear()
 
     def on_delete_button_clicked(self) -> None:
@@ -95,24 +111,30 @@ class CategoryWidget(QWidget):
         """
         selected_items = self.list.selectedItems()
         for item in selected_items:
+            category_name = item.text()
+            self.delete_category_signal.emit(category_name)
             self.list.takeItem(self.list.row(item))
 
     def on_editing_finished(self, line_edit: QLineEdit,
                             item: QListWidgetItem) -> None:
         """
         Заменяет старый текст элемента списка новым текстом,
-        введенным в виджете редактирования строк.
+        введенным в редактировании строки.
         """
-        # получаем новый текст из line edit
+        # получаем новое имя категории
         new_text = line_edit.text()
 
-        # заменяем элемент списка на новый текст
-        index = self.list.row(item)
-        self.list.takeItem(index)
-        self.list.insertItem(index, new_text)
+        # получаем старое имя категории
+        old_text = item.text()
 
-        # удаляем line edit
-        line_edit.deleteLater()
+        # удаляем редактирующийся элемент
+        self.list.removeItemWidget(item)
+
+        # обновляем элемент списка
+        item.setText(new_text)
+
+        # эмитируем сигнал, что имя категории изменилось
+        self.category_name_edited.emit(old_text, new_text)
 
     def on_item_double_clicked(self, item: QListWidgetItem) -> None:
         """

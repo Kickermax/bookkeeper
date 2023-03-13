@@ -1,9 +1,4 @@
-"""
-Этот код определяет класс MainWindow,
-который служит главным окном для виджетов
-"""
-import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QTabWidget
+from PyQt6.QtWidgets import QMainWindow, QTabWidget
 from bookkeeper.view.expenses_list_widget import ExpensesListWidget
 from bookkeeper.view.budget_widget import BudgetWidget
 from bookkeeper.view.add_expense_widget import AddExpenseWidget
@@ -14,34 +9,35 @@ class MainWindow(QMainWindow):
     """
     Виджет для отображения главного окна.
     """
-    def __init__(self) -> None:
+
+    def __init__(self):
         super().__init__()
 
         # создаёт QTabWidget для хранения различных виджетов
         tab_widget = QTabWidget()
 
-        # виджет расходов
-        expenses_list = ExpensesListWidget()
-        tab_widget.addTab(expenses_list, "Список расходов")
-
-        # виджет добавления расхода
-        add_expense = AddExpenseWidget()
-        tab_widget.addTab(add_expense, "Добавить расход")
-
         # виджет бюджета
-        budget = BudgetWidget()
-        tab_widget.addTab(budget, "Бюджет")
+        self.budget_widget = BudgetWidget()
+        tab_widget.addTab(self.budget_widget, "Бюджет")
 
         # виджет категорий
-        category = CategoryWidget()
-        tab_widget.addTab(category, "Категории")
+        self.category_widget = CategoryWidget()
+        tab_widget.addTab(self.category_widget, "Категории")
+
+        # виджет расходов
+        self.expenses_list_widget = ExpensesListWidget()
+        tab_widget.addTab(self.expenses_list_widget, "Список расходов")
+
+        # виджет добавления расхода
+        self.add_expense_widget = AddExpenseWidget()
+        tab_widget.addTab(self.add_expense_widget, "Добавить расход")
 
         # виджет вкладок в качестве центрального виджета главного окна
         self.setCentralWidget(tab_widget)
+        self.presenter = None
+
+    # заглушка
 
 
-# создаёт приложение и показывает главное окно
-app = QApplication(sys.argv)
-main_window = MainWindow()
-main_window.show()
-sys.exit(app.exec())
+def set_presenter(self, presenter):
+    self.presenter = presenter

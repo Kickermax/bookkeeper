@@ -2,8 +2,10 @@
 Модуль содержит класс виджета расходов
 для отображения информации о расходах таблицей.
 """
-from typing import cast
+from datetime import datetime
+from typing import cast, List, Dict, Tuple
 
+from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
@@ -12,7 +14,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QAbstractItemView,
     QHBoxLayout,
-    QPushButton,
+    QPushButton, QComboBox, QInputDialog, QMessageBox,
 )
 
 
@@ -20,22 +22,18 @@ class ExpensesListWidget(QWidget):
     """
     Виджет для отображения таблицы расходов.
     """
+
+    delete_button_clicked = pyqtSignal(int)
+    category_cell_double_clicked = pyqtSignal(int, int, str)
+    category_cell_changed = pyqtSignal(int, int, int)
+    expense_cell_changed = pyqtSignal(int, int, str)
+
     def __init__(self) -> None:
         super().__init__()
 
-        # просто для примера
-        self.expenses = [
-            {"date": "2023-03-01", "description": "Продукты",
-                "category": "Еда", "amount": "3000.00"},
-            {"date": "2023-03-02", "description": "Питса",
-                "category": "Еда", "amount": "700.00"},
-            {"date": "2023-03-03", "description": "Билеты на Чебурашку",
-                "category": "Развлечения", "amount": "300.00"}
-        ]
-
         self.table = QTableWidget()
         self.init_table()
-        self.update_table()
+        self.update_table([])
 
         day_button = QPushButton("День")
         week_button = QPushButton("Неделя")
@@ -55,68 +53,103 @@ class ExpensesListWidget(QWidget):
         week_button.clicked.connect(self.filter_week)
         month_button.clicked.connect(self.filter_month)
 
+        self.table.cellDoubleClicked.connect(self._on_cell_double_clicked)
+
     def init_table(self) -> None:
         """
-        инициализирует таблицу, на которой будут
+        Инициализирует таблицу, на которой будут
         отображаться данные о расходах.
         """
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels(
-            ["Дата", "Название", "Категория", "Количество", ""])
+            ["Категория", "Сумма расхода", "Дата", "Комментарий", ""])
         self.table.verticalHeader().setVisible(False)
         self.table.horizontalHeader().setSectionResizeMode(
             QHeaderView.ResizeMode.ResizeToContents)
 
-        self.table.setRowCount(len(self.expenses))
-        for row, expense in enumerate(self.expenses):
-            date_item = QTableWidgetItem(expense["date"])
-            description_item = QTableWidgetItem(expense["description"])
-            category_item = QTableWidgetItem(expense["category"])
-            amount_item = QTableWidgetItem(expense["amount"])
-            delete_button = QPushButton("Удалить")
-            delete_button.clicked.connect(self.delete_row)
-            self.table.setItem(row, 0, date_item)
-            self.table.setItem(row, 1, description_item)
-            self.table.setItem(row, 2, category_item)
-            self.table.setItem(row, 3, amount_item)
-            self.table.setCellWidget(row, 4, delete_button)
+        for row in range(self.table.rowCount()):
+            for col in range(self.table.columnCount()):
+                if col == 0:
+                    self.table.item(row, col).setFlags(
+                        Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+                else:
+                    self.table.item(row, col).setFlags(
+                        Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
 
-        self.table.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked)
-
-    def update_table(self) -> None:
+    def update_table(self, expenses: List[Dict[str, str]]) -> None:
         """
         Обновляет содержимое таблицы
-        с учетом изменений в списке расходов.
+        на основе данных из репозитория.
         """
-        self.table.setRowCount(len(self.expenses))
-        for row, expense in enumerate(self.expenses):
-            date_item = self.table.item(row, 0)
-            description_item = self.table.item(row, 1)
-            category_item = self.table.item(row, 2)
-            amount_item = self.table.item(row, 3)
-            delete_button = self.table.cellWidget(row, 4)
-            if not all((date_item,
-                        description_item,
-                        category_item,
-                        amount_item,
-                        delete_button)):
-                date_item = QTableWidgetItem(expense["date"])
+        self.table.clearContents()
+        self.table.setRowCount(len(expenses))
+        for row, expense in enumerate(expenses):
+            category_item = QTableWidgetItem(expense["category"])
+            amount_item = QTableWidgetItem(str(expense["amount"]))
+            date_item = QTableWidgetItem(expense["date"])
+            description_item = QTableWidgetItem(expense["description"])
+            delete_button = QPushButton("Удалить")
+            delete_button.clicked.connect(self.delete_row)
 
-                description_item = QTableWidgetItem(expense["description"])
+            self.table.setItem(row, 0, category_item)
+            self.table.setItem(row, 1, amount_item)
+            self.table.setItem(row, 2, date_item)
+            self.table.setItem(row, 3, description_item)
+            self.table.setCellWidget(row, 4, delete_button)
 
-                category_item = QTableWidgetItem(expense["category"])
+    def _on_cell_double_clicked(self, row: int, column: int) -> None:
+        if column in (1, 3):
+            item = self.table.item(row, column)
+            new_value, ok = QInputDialog.getText(self, "Изменение значения", "Введите новое значение:",
+                                                 text=item.text())
+            if ok:
+                self.expense_cell_changed.emit(row, column, new_value)
 
-                amount_item = QTableWidgetItem(expense["amount"])
+        elif column == 2:
+            item = self.table.item(row, column)
+            new_value, ok = QInputDialog.getText(self, "Изменение значения", "Введите новое значение:",
+                                                 text=item.text())
+            if ok:
+                try:
+                    datetime.strptime(new_value, "%Y-%m-%d")
+                    self.expense_cell_changed.emit(row, column, new_value)
+                except ValueError:
+                    QMessageBox.warning(self, "Ошибка ввода даты",
+                                        "Введите дату в формате YYYY-MM-DD")
+                    self.table.setItem(row, column, QTableWidgetItem(item.text()))
 
-                delete_button = QPushButton("Удалить")
-                delete_button.clicked.connect(self.delete_row)
+        elif column == 0:
+            item = self.table.item(row, column)
+            self.category_cell_double_clicked.emit(row, column, item.text())
 
-                self.table.setItem(row, 0, date_item)
-                self.table.setItem(row, 1, description_item)
-                self.table.setItem(row, 2, category_item)
-                self.table.setItem(row, 3, amount_item)
-                self.table.setCellWidget(row, 4, delete_button)
-                self.table.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked)
+    def _update_category_cell(self, row: int, column: int, categories: List[Tuple[int, str]]) -> None:
+        try:
+            combo_box = QComboBox()
+            self.categories = categories
+            combo_box.insertSeparator(0)
+
+            categories_sorted = sorted(categories, key=lambda x: x[0])
+
+            combo_box.addItems([name for _, name in categories_sorted])
+            self.table.setCellWidget(row, column, combo_box)
+
+            combo_box.currentIndexChanged.connect(lambda index, row=row, column=column, categories=categories_sorted:
+                                                  self.category_cell_changed.emit(row, column,
+                                                                                  categories[index - 1][0]))
+            self.table.setCellWidget(row, column, combo_box)
+        except Exception as e:
+            print(f"Ошибка _update_category_cell: {e}")
+
+    def delete_row(self) -> None:
+        """
+        Удаляет строку с выбранным расходом из списка расходов
+        и обновляет содержимое таблицы.
+        """
+        delete_button: QPushButton = cast(QPushButton, self.sender())
+        index: int = self.table.indexAt(delete_button.pos()).row()
+        print(index)
+        if index >= 0:
+            self.delete_button_clicked.emit(index)
 
     def filter_day(self) -> None:
         """
@@ -136,13 +169,14 @@ class ExpensesListWidget(QWidget):
         """
         pass
 
-    def delete_row(self) -> None:
-        """
-        Удаляет строку с выбранным расходом из списка расходов
-        и обновляет содержимое таблицы.
-        """
-        delete_button: QPushButton = cast(QPushButton, self.sender())
-        index: int = self.table.indexAt(delete_button.pos()).row()
-        if index >= 0:
-            self.expenses.pop(index)
-            self.update_table()
+
+class EditableTableWidgetItem(QTableWidgetItem):
+    """
+    QTableWidgetItem, который допускает редактирование
+    """
+
+    def __init__(self, text):
+        super().__init__(text)
+
+    def flags(self):
+        return super().flags() | Qt.ItemFlag.ItemIsEditable
