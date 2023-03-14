@@ -39,9 +39,8 @@
 poetry install
 ```
 
-```
 Команды для запуска тестов:
-```commandline
+```
 poetry run pytest --cov
 poetry run mypy --strict bookkeeper
 poetry run pylint bookkeeper
