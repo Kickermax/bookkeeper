@@ -84,7 +84,8 @@ class Presenter:
 
     def init_category(self) -> None:
         """
-        Заполняет список категорий категориями из репозитория
+        Заполняет CategoryWidget
+        Category из репозитория
         """
         categories = [category.name for category in self.cat_repo.get_all()]
         self.main_window.category_widget.list.clear()
@@ -92,7 +93,8 @@ class Presenter:
 
     def init_budget(self) -> None:
         """
-        Устанавливает значения бюджета из репозитория
+        Устанавливает значения Budget из репозитория
+        в BudgetWidget
         """
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         week_start = today - timedelta(days=today.weekday())
@@ -122,10 +124,36 @@ class Presenter:
             self.main_window.budget_widget.set_month_budget(
                 month_amount.amount)
 
+    def add_expense(self) -> None:
+        """
+        Создает новый объект Expense на основе данных из виджета
+        AddExpenseWidget и добавляет его в репозиторий.
+        """
+        comment = self.main_window.add_expense_widget.description_edit.text()
+        # для поиска pk категории на основе названия:
+        category_name = self.main_window.add_expense_widget.category_combo.currentText()
+        category_id = next((id for id, name in
+                            self.main_window.add_expense_widget.categories
+                            if name == category_name),
+                           None)
+        amount = int(self.main_window.add_expense_widget.amount_edit.text())
+
+        if category_id is not None:
+            expense = Expense(int(amount),
+                              int(category_id),
+                              datetime.now(),
+                              datetime.now(),
+                              comment)
+            self.exp_repo.add(expense)
+            self.update_expenses_list()
+            self.get_expenses_for_today()
+        else:
+            print("Категория с таким именем не существует")
+
     def update_expenses_list(self) -> None:
         """
-        Обновляет содержимое таблицы расходов
-        на основе данных из репозитория.
+        Обновляет содержимое ExpensesListWidget
+        на основе данных об объектах Expense из репозитория.
         """
         categories = self.cat_repo.get_all()
         objects = self.exp_repo.get_all()
@@ -172,35 +200,12 @@ class Presenter:
 
         self.main_window.expenses_list_widget.update_table(expenses_dict)
 
-    def delete_expense(self, index: int) -> None:
-        """
-        Удаляет расход из базы данных и обновляет содержимое таблицы.
-        """
-        objects = self.exp_repo.get_all()
-        expenses = [expense for expense in objects if isinstance(expense, Expense)]
-        expense = expenses[index]
-        self.exp_repo.delete(expense.pk)
-        self.update_expenses_list()
-        self.get_expenses_for_today()
-
-    def update_category_list(self) -> None:
-        """
-        Обновляет содержимое списка категорий в комбобоксе виджета добавления расхода
-        на основе данных из репозитория.
-        """
-        categories = self.cat_repo.get_all()
-        categories_list = [(category.pk, category.name) for category in categories]
-        self.main_window.add_expense_widget.set_categories(categories_list)
-
-    def _on_category_cell_double_clicked(self, row: int, column: int) -> None:
-        categories = self.cat_repo.get_all()
-        categories_list = []
-        for category in categories:
-            categories_list.append((category.pk, category.name))
-        self.main_window.expenses_list_widget.update_category_cell(
-            row, column, categories_list)
-
     def _on_category_cell_changed(self, row: int, column: int, category_id: int) -> None:
+        """
+        Добавляет QMessageBox при двойном нажатии
+        на ячейки в ExpensesListWidget
+        и позволяет изменить атрибуты объектов Expense из репозитория
+        """
         expense_id = self.exp_repo.get_all()[row].pk
         expense = self.exp_repo.get(expense_id)
         category = self.cat_repo.get(category_id)
@@ -226,31 +231,16 @@ class Presenter:
         else:
             raise ValueError("Статья расхода или категория не найдена")
 
-    def add_expense(self) -> None:
+    def delete_expense(self, index: int) -> None:
         """
-        Создает новый объект Expense на основе данных из виджета
-        AddExpenseWidget и добавляет его в репозиторий.
+        Удаляет объект Expense из репозитория
         """
-        comment = self.main_window.add_expense_widget.description_edit.text()
-        # для поиска pk категории на основе названия:
-        category_name = self.main_window.add_expense_widget.category_combo.currentText()
-        category_id = next((id for id, name in
-                            self.main_window.add_expense_widget.categories
-                            if name == category_name),
-                           None)
-        amount = int(self.main_window.add_expense_widget.amount_edit.text())
-
-        if category_id is not None:
-            expense = Expense(int(amount),
-                              int(category_id),
-                              datetime.now(),
-                              datetime.now(),
-                              comment)
-            self.exp_repo.add(expense)
-            self.update_expenses_list()
-            self.get_expenses_for_today()
-        else:
-            print("Категория с таким именем не существует")
+        objects = self.exp_repo.get_all()
+        expenses = [expense for expense in objects if isinstance(expense, Expense)]
+        expense = expenses[index]
+        self.exp_repo.delete(expense.pk)
+        self.update_expenses_list()
+        self.get_expenses_for_today()
 
     def update_expense(self, row: int, column: int, new_value: str) -> None:
         """
@@ -275,6 +265,39 @@ class Presenter:
         self.exp_repo.update(expense)
         self.update_expenses_list()
         self.get_expenses_for_today()
+
+    def _on_category_cell_double_clicked(self, row: int, column: int) -> None:
+        """
+        Заполняет содержимое QComboBox в ExpensesListWidget
+        данными о Category из репозитория
+        """
+        categories = self.cat_repo.get_all()
+        categories_list = []
+        for category in categories:
+            categories_list.append((category.pk, category.name))
+        self.main_window.expenses_list_widget.update_category_cell(
+            row, column, categories_list)
+
+    def update_category_list(self) -> None:
+        """
+        Заполняет содержимое QComboBox в AddExpenseWidget
+        данными о Category из репозитория
+        """
+        categories = self.cat_repo.get_all()
+        categories_list = [(category.pk, category.name) for category in categories]
+        self.main_window.add_expense_widget.set_categories(categories_list)
+
+    def add_category(self, category_name: str) -> None:
+        """
+        Создаёт новый объект Category в CategoryListWidget
+        и добавляет его в репозиторий
+        """
+        category = Category(name=category_name)
+        self.cat_repo.add(category)
+
+        self.update_expenses_list()
+        self.update_category_list()
+        self.init_category()
 
     def update_category_name(self, old_name: str, new_name: str) -> None:
         """
@@ -342,18 +365,6 @@ class Presenter:
         # обновление таблицы расходов и категорий
         self.update_expenses_list()
         self.update_category_list()
-
-    def add_category(self, category_name: str) -> None:
-        """
-        Создаёт новый объект Category в CategoryListWidget
-        и добавляет его в репозиторий
-        """
-        category = Category(name=category_name)
-        self.cat_repo.add(category)
-
-        self.update_expenses_list()
-        self.update_category_list()
-        self.init_category()
 
     def update_day_budget(self, amount: float) -> None:
         """

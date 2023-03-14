@@ -64,8 +64,8 @@ class ExpensesListWidget(QWidget):
 
     def update_table(self, expenses: List[Dict[str, str]]) -> None:
         """
-        Обновляет содержимое таблицы
-        на основе данных из репозитория.
+        Обновляет содержимое ExpensesListWidget
+        полученным списком
         """
         self.table.clearContents()
         self.table.setRowCount(len(expenses))
