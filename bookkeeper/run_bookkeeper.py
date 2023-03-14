@@ -12,7 +12,7 @@ from bookkeeper.repository.sqlite_repository import SQLiteRepository
 from bookkeeper.bookkeeper_presenter import Presenter
 
 
-def main():
+def main() -> None:
     # указываем репозиторий
     exp_repo = SQLiteRepository('budget.db', Expense)
     cat_repo = SQLiteRepository('budget.db', Category)

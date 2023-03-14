@@ -10,7 +10,7 @@ class MainWindow(QMainWindow):
     Виджет для отображения главного окна.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         # создаёт QTabWidget для хранения различных виджетов
@@ -20,24 +20,18 @@ class MainWindow(QMainWindow):
         self.budget_widget = BudgetWidget()
         tab_widget.addTab(self.budget_widget, "Бюджет")
 
-        # виджет категорий
-        self.category_widget = CategoryWidget()
-        tab_widget.addTab(self.category_widget, "Категории")
+        # виджет добавления расхода
+        self.add_expense_widget = AddExpenseWidget()
+        tab_widget.addTab(self.add_expense_widget, "Добавить расход")
 
         # виджет расходов
         self.expenses_list_widget = ExpensesListWidget()
         tab_widget.addTab(self.expenses_list_widget, "Список расходов")
 
-        # виджет добавления расхода
-        self.add_expense_widget = AddExpenseWidget()
-        tab_widget.addTab(self.add_expense_widget, "Добавить расход")
+        # виджет категорий
+        self.category_widget = CategoryWidget()
+        tab_widget.addTab(self.category_widget, "Категории")
 
         # виджет вкладок в качестве центрального виджета главного окна
         self.setCentralWidget(tab_widget)
         self.presenter = None
-
-    # заглушка
-
-
-def set_presenter(self, presenter):
-    self.presenter = presenter

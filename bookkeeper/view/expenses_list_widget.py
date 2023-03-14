@@ -3,7 +3,7 @@
 для отображения информации о расходах таблицей.
 """
 from datetime import datetime
-from typing import cast, List, Dict, Tuple
+from typing import cast, List, Dict, Tuple, Union
 
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import (
@@ -175,8 +175,8 @@ class EditableTableWidgetItem(QTableWidgetItem):
     QTableWidgetItem, который допускает редактирование
     """
 
-    def __init__(self, text):
+    def __init__(self, text: str) -> None:
         super().__init__(text)
 
-    def flags(self):
+    def flags(self) -> Qt.ItemFlag:
         return super().flags() | Qt.ItemFlag.ItemIsEditable

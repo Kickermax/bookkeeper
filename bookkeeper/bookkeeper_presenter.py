@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import List, Dict
 
 from PyQt6.QtWidgets import QMessageBox
 
@@ -22,7 +23,7 @@ class Presenter:
         self.exp_repo = exp_repo
         self.bud_repo = bud_repo
 
-    def show_main_window(self):
+    def show_main_window(self) -> None:
         self.main_window = MainWindow()
 
         # инициализирует таблицу расходов
@@ -31,6 +32,7 @@ class Presenter:
         # инициализирует список категорий
         self.init_category()
 
+        # инициализирует бюджет
         self.init_budget()
 
         # соединяем сигналы
@@ -64,6 +66,31 @@ class Presenter:
         self.main_window.category_widget.list.clear()
         self.main_window.category_widget.init_category_list(categories)
 
+    def init_budget(self) -> None:
+        """
+        Устанавливает значения из базы данных
+        """
+        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        week_start = today - timedelta(days=today.weekday())
+        current_month = datetime.now().replace(day=1)
+        day_budget = self.bud_repo.get_all({'period': 'day', 'term': today})
+        week_budget = self.bud_repo.get_all({'period': 'week', 'term': week_start})
+        month_budget = self.bud_repo.get_all({'period': 'month'})
+        month_amount = next((b for b in month_budget if
+                             datetime.strptime(
+                                 b.term.strftime('%Y-%m-%d %H:%M:%S.%f') if isinstance(b.term, datetime) else b.term,
+                                 '%Y-%m-%d %H:%M:%S.%f').month == current_month.month and datetime.strptime(
+                                 b.term.strftime('%Y-%m-%d %H:%M:%S.%f') if isinstance(b.term, datetime) else b.term,
+                                 '%Y-%m-%d %H:%M:%S.%f').year == current_month.year),
+                            None)
+
+        if day_budget:
+            self.main_window.budget_widget.day_budget_label.setText(f"\u20bd{day_budget[0].amount:.2f}")
+        if week_budget:
+            self.main_window.budget_widget.week_budget_label.setText(f"\u20bd{week_budget[0].amount:.2f}")
+        if month_amount:
+            self.main_window.budget_widget.set_month_budget(month_amount.amount)
+
     def update_expenses_list(self) -> None:
         """
         Обновляет содержимое таблицы расходов
@@ -73,7 +100,7 @@ class Presenter:
         objects = self.exp_repo.get_all()
         expenses = [expense for expense in objects if isinstance(expense, Expense)]
         expenses_dict = []
-        categories_dict = {}
+        categories_dict: Dict[int, Category] = {}
 
         # Ищем категорию "Удалено" и получаем её pk
         deleted_category_pk = None
@@ -98,8 +125,13 @@ class Presenter:
                     self.exp_repo.update(expense)
                 categories_dict[expense.category] = category
 
+            if isinstance(expense.expense_date, str):
+                expense_date = datetime.strptime(expense.expense_date, "%Y-%m-%d %H:%M:%S.%f")
+            else:
+                expense_date = expense.expense_date
+
             expense_dict = {
-                "date": datetime.strptime(expense.expense_date, "%Y-%m-%d %H:%M:%S.%f").strftime("%Y-%m-%d"),
+                "date": expense_date.strftime("%Y-%m-%d"),
                 "description": expense.comment,
                 "category": str(category.name),
                 "amount": str(expense.amount)
@@ -133,8 +165,10 @@ class Presenter:
 
     def _on_category_cell_double_clicked(self, row: int, column: int, category_name: str) -> None:
         categories = self.cat_repo.get_all()
-        categories = [(category.pk, category.name) for category in categories]
-        self.main_window.expenses_list_widget._update_category_cell(row, column, categories)
+        categories_list = []
+        for category in categories:
+            categories_list.append((category.pk, category.name))
+        self.main_window.expenses_list_widget._update_category_cell(row, column, categories_list)
 
     def _on_category_cell_changed(self, row: int, column: int, category_id: int) -> None:
         expense_id = self.exp_repo.get_all()[row].pk
@@ -195,6 +229,7 @@ class Presenter:
         try:
             self.exp_repo.update(expense)
             self.update_expenses_list()
+            self.get_expenses_for_today()
         except Exception as e:
             print(f"Ошибка update_expense: {e}")
 
@@ -233,7 +268,6 @@ class Presenter:
         Удаляет категорию из репозитория категорий и
         обновляет таблицу расходов и список категорий.
         """
-        print(category_name)
         try:
             # Получаем список всех категорий из репозитория
             categories = self.cat_repo.get_all()
@@ -326,49 +360,28 @@ class Presenter:
 
         self.main_window.budget_widget.month_budget_label.setText(f"\u20bd{amount:.2f}")
 
-    def init_budget(self):
-        """
-        Устанавливает значения из базы данных
-        """
-        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        week_start = today - timedelta(days=today.weekday())
-        current_month = datetime.now().replace(day=1)
-        day_budget = self.bud_repo.get_all({'period': 'day', 'term': today})
-        week_budget = self.bud_repo.get_all({'period': 'week', 'term': week_start})
-        month_budget = self.bud_repo.get_all({'period': 'month'})
-        month_amount = next((b for b in month_budget if
-                       datetime.strptime(b.term, '%Y-%m-%d %H:%M:%S.%f').month == current_month.month and datetime.strptime(
-                           b.term,
-                           '%Y-%m-%d %H:%M:%S.%f').year == current_month.year),
-                      None)
-
-        if day_budget:
-            self.main_window.budget_widget.day_budget_label.setText(f"\u20bd{day_budget[0].amount:.2f}")
-        if week_budget:
-            self.main_window.budget_widget.week_budget_label.setText(f"\u20bd{week_budget[0].amount:.2f}")
-        if month_amount:
-            self.main_window.budget_widget.set_month_budget(month_amount.amount)
-
-    def get_expenses_for_today(self):
+    def get_expenses_for_today(self) -> None:
         """
         Получает все расходы за сегодня и считает их сумму
         """
-        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        today_expenses = self.exp_repo.get_all(where={'strftime("%Y-%m-%d", expense_date)': str(today.date())})
-        total_amount_today = sum(float(expense.amount) for expense in today_expenses)
+        today: datetime = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_expenses: List[Expense] = self.exp_repo.get_all(
+            where={'strftime("%Y-%m-%d", expense_date)': str(today.date())})
+        total_amount_today: float = sum(float(expense.amount) for expense in today_expenses)
 
-        month_expenses = self.exp_repo.get_all(where={'strftime("%Y-%m", expense_date)': today.strftime("%Y-%m")})
-        total_amount_month = sum(float(expense.amount) for expense in month_expenses)
+        month_expenses: List[Expense] = self.exp_repo.get_all(
+            where={'strftime("%Y-%m", expense_date)': today.strftime("%Y-%m")})
+        total_amount_month: float = sum(float(expense.amount) for expense in month_expenses)
 
-        days_since_monday = today.isoweekday() - 1
-        week_start = (today - timedelta(days=days_since_monday)).replace(hour=0, minute=0, second=0, microsecond=0)
-        print(week_start)
-        week_expenses = self.exp_repo.get_all({'strftime("%Y-%m-%d", expense_date)': str(week_start.date())})
-        print(week_expenses)
-        total_amount_week = sum(float(expense.amount) for expense in week_expenses)
+        days_since_monday: int = today.isoweekday() - 1
+        week_start: datetime = (today - timedelta(days=days_since_monday)).replace(hour=0, minute=0, second=0,
+                                                                                   microsecond=0)
+        week_expenses: List[Expense] = self.exp_repo.get_all(
+            {'strftime("%Y-%m-%d", expense_date)': str(week_start.date())})
+        total_amount_week: float = sum(float(expense.amount) for expense in week_expenses)
 
-        day_expenses = total_amount_today
-        week_expenses = total_amount_week
-        month_expenses = total_amount_month
+        day_expenses: float = total_amount_today
+        week_expenses: float = total_amount_week
+        month_expenses: float = total_amount_month
 
         self.main_window.budget_widget.expenses_updated.emit(day_expenses, week_expenses, month_expenses)

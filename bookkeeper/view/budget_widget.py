@@ -93,11 +93,11 @@ class BudgetWidget(QWidget):
         layout.addWidget(expenses_group_box)
         self.setLayout(layout)
 
-        self.day_budget_edit.editingFinished.connect(lambda: self.update_day_budget(float(self.day_budget_edit.text())))
+        self.day_budget_edit.editingFinished.connect(lambda: self.update_day_budget(str(self.day_budget_edit.text())))
         self.week_budget_edit.editingFinished.connect(
-            lambda: self.update_week_budget(float(self.week_budget_edit.text())))
+            lambda: self.update_week_budget(str(self.week_budget_edit.text())))
         self.month_budget_edit.editingFinished.connect(
-            lambda: self.update_month_budget(float(self.month_budget_edit.text())))
+            lambda: self.update_month_budget(str(self.month_budget_edit.text())))
 
         self.expenses_updated.connect(self.update_expenses_labels)
 
