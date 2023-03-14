@@ -35,7 +35,7 @@ class AddExpenseWidget(QWidget):
         layout.addRow("Категория:", self.category_combo)
 
         self.amount_edit = QLineEdit()
-        self.amount_edit.setPlaceholderText("0000")
+        self.amount_edit.setPlaceholderText("Введите число")
         self.amount_edit.textChanged.connect(self._update_add_button_state)
         layout.addRow("Сумма расхода:", self.amount_edit)
 
@@ -72,17 +72,24 @@ class AddExpenseWidget(QWidget):
         try:
             amount = float(amount_str)
             if amount <= 0:
-                message_box = QMessageBox.warning(self,
-                                                  "Неверный формат количества",
-                                                  "Количество должно быть больше нуля!")
+                message_box = QMessageBox.warning(
+                    self,
+                    "Неверный формат количества",
+                    "Количество должно быть больше нуля!"
+                )
                 return message_box
+            else:
+                amount_str = "{:.2f}".format(amount)
+                print(amount_str)
         except ValueError:
-            message_box = QMessageBox.warning(self,
-                                              "Неверный формат количества",
-                                              "Количество должно быть в формате числа!")
+            message_box = QMessageBox.warning(
+                self,
+                "Неверный формат количества",
+                "Количество должно быть в формате числа!"
+            )
             return message_box
 
-        self.expense_added.emit(description, category, amount)
+        self.expense_added.emit(description, category, int(float(amount_str)))
 
         # очищает форму после добавления расхода
         self.description_edit.clear()
@@ -98,4 +105,3 @@ class AddExpenseWidget(QWidget):
         self.category_combo.clear()
         self.categories = categories
         self.category_combo.addItems([name for _, name in categories])
-        self.category_combo.close

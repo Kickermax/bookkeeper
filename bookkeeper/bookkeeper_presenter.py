@@ -362,7 +362,9 @@ class Presenter:
 
         days_since_monday = today.isoweekday() - 1
         week_start = (today - timedelta(days=days_since_monday)).replace(hour=0, minute=0, second=0, microsecond=0)
+        print(week_start)
         week_expenses = self.exp_repo.get_all({'strftime("%Y-%m-%d", expense_date)': str(week_start.date())})
+        print(week_expenses)
         total_amount_week = sum(float(expense.amount) for expense in week_expenses)
 
         day_expenses = total_amount_today

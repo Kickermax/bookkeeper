@@ -30,19 +30,19 @@ class BudgetWidget(QWidget):
         self.month_label = QLabel(f"Бюджет за {current_month}")
         self.month_label.setStyleSheet("font-size: 36px; font-weight: bold;")
 
-        self.month_budget_label = QLabel("\u20bd0.00")
+        self.month_budget_label = QLabel("0.00")
         self.month_budget_label.setStyleSheet("font-size: 24px;")
 
         self.week_label = QLabel("Бюджет на неделю:")
         self.week_label.setStyleSheet("font-size: 16px;")
 
-        self.week_budget_label = QLabel("\u20bd0.00")
+        self.week_budget_label = QLabel("0.00")
         self.week_budget_label.setStyleSheet("font-size: 14px;")
 
         self.day_label = QLabel("Бюджет за день:")
         self.day_label.setStyleSheet("font-size: 16px;")
 
-        self.day_budget_label = QLabel("\u20bd0.00")
+        self.day_budget_label = QLabel("0.00")
         self.day_budget_label.setStyleSheet("font-size: 14px;")
 
         group_box = QGroupBox("ЗАДАТЬ НОВЫЙ БЮДЖЕТ:")
@@ -51,17 +51,17 @@ class BudgetWidget(QWidget):
         day_budget_label = QLabel("Задать бюджет на день:")
         day_budget_label.setStyleSheet("font-size: 12px;")
         self.day_budget_edit = QLineEdit()
-        self.day_budget_edit.setPlaceholderText("\u20bd0.00")
+        self.day_budget_edit.setPlaceholderText("0.00")
 
         week_budget_label = QLabel("Задать бюджет на неделю:")
         week_budget_label.setStyleSheet("font-size: 12px;")
         self.week_budget_edit = QLineEdit()
-        self.week_budget_edit.setPlaceholderText("\u20bd0.00")
+        self.week_budget_edit.setPlaceholderText("0.00")
 
         month_budget_label = QLabel("Задать бюджет на месяц:")
         month_budget_label.setStyleSheet("font-size: 12px;")
         self.month_budget_edit = QLineEdit()
-        self.month_budget_edit.setPlaceholderText("\u20bd0.00")
+        self.month_budget_edit.setPlaceholderText("0.00")
 
         group_layout.addWidget(day_budget_label, 0, 0)
         group_layout.addWidget(self.day_budget_edit, 0, 1)
@@ -75,9 +75,9 @@ class BudgetWidget(QWidget):
         expenses_layout = QVBoxLayout()
         expenses_group_box.setLayout(expenses_layout)
 
-        self.day_expenses_label = QLabel("Расходы за день: \u20bd0.00")
-        self.week_expenses_label = QLabel("Расходы за неделю: \u20bd0.00")
-        self.month_expenses_label = QLabel("Расходы за месяц: \u20bd0.00")
+        self.day_expenses_label = QLabel("Расходы за день: 0.00")
+        self.week_expenses_label = QLabel("Расходы за неделю: 0.00")
+        self.month_expenses_label = QLabel("Расходы за месяц: 0.00")
         expenses_layout.addWidget(self.day_expenses_label)
         expenses_layout.addWidget(self.week_expenses_label)
         expenses_layout.addWidget(self.month_expenses_label)
@@ -105,7 +105,7 @@ class BudgetWidget(QWidget):
         """
         Устанавливает бюджет на месяц заголовком
         """
-        self.month_budget_label.setText(f"\u20bd{value:.2f}")
+        self.month_budget_label.setText(f"{value:.2f}")
 
     def set_month(self, year: int, month: int) -> None:
         """
@@ -121,6 +121,7 @@ class BudgetWidget(QWidget):
         try:
             day_budget = float(value)
             self.day_budget_edited.emit(day_budget)
+            self.day_budget_label.setText("{:.2f}".format(day_budget))
         except ValueError as e:
             print(e)
 
@@ -131,6 +132,7 @@ class BudgetWidget(QWidget):
         try:
             week_budget = float(value)
             self.week_budget_edited.emit(week_budget)
+            self.week_budget_label.setText("{:.2f}".format(week_budget))
         except ValueError as e:
             print(e)
 
@@ -141,6 +143,7 @@ class BudgetWidget(QWidget):
         try:
             month_budget = float(value)
             self.month_budget_edited.emit(month_budget)
+            self.month_budget_label.setText("{:.2f}".format(month_budget))
         except ValueError as e:
             print(e)
 
@@ -151,7 +154,7 @@ class BudgetWidget(QWidget):
         Метод для обновления месячных расходов
         """
 
-        self.day_expenses_label.setText(f"Расходы за день: \u20bd{day_expenses:.2f}")
-        self.week_expenses_label.setText(f"Расходы за неделю: \u20bd{week_expenses:.2f}")
-        self.month_expenses_label.setText(f"Расходы за месяц: \u20bd{month_expenses:.2f}")
+        self.day_expenses_label.setText(f"Расходы за день: {day_expenses:.2f}")
+        self.week_expenses_label.setText(f"Расходы за неделю: {week_expenses:.2f}")
+        self.month_expenses_label.setText(f"Расходы за месяц: {month_expenses:.2f}")
 
