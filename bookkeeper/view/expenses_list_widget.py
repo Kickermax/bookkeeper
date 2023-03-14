@@ -3,7 +3,7 @@
 для отображения информации о расходах таблицей.
 """
 from datetime import datetime
-from typing import cast, List, Dict, Tuple, Union
+from typing import cast, List, Dict, Tuple
 
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import (
@@ -12,8 +12,6 @@ from PyQt6.QtWidgets import (
     QHeaderView,
     QWidget,
     QVBoxLayout,
-    QAbstractItemView,
-    QHBoxLayout,
     QPushButton, QComboBox, QInputDialog, QMessageBox,
 )
 
@@ -35,23 +33,9 @@ class ExpensesListWidget(QWidget):
         self.init_table()
         self.update_table([])
 
-        day_button = QPushButton("День")
-        week_button = QPushButton("Неделя")
-        month_button = QPushButton("Месяц")
-
-        filter_layout = QHBoxLayout()
-        filter_layout.addWidget(day_button)
-        filter_layout.addWidget(week_button)
-        filter_layout.addWidget(month_button)
-
         layout = QVBoxLayout()
-        layout.addLayout(filter_layout)
         layout.addWidget(self.table)
         self.setLayout(layout)
-
-        day_button.clicked.connect(self.filter_day)
-        week_button.clicked.connect(self.filter_week)
-        month_button.clicked.connect(self.filter_month)
 
         self.table.cellDoubleClicked.connect(self._on_cell_double_clicked)
 
@@ -74,7 +58,9 @@ class ExpensesListWidget(QWidget):
                         Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
                 else:
                     self.table.item(row, col).setFlags(
-                        Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+                        Qt.ItemFlag.ItemIsEditable |
+                        Qt.ItemFlag.ItemIsEnabled |
+                        Qt.ItemFlag.ItemIsSelectable)
 
     def update_table(self, expenses: List[Dict[str, str]]) -> None:
         """
@@ -98,18 +84,26 @@ class ExpensesListWidget(QWidget):
             self.table.setCellWidget(row, 4, delete_button)
 
     def _on_cell_double_clicked(self, row: int, column: int) -> None:
+        """
+        Двойным нажатием вызывает QInputDialog,
+        где можно обновить значения объекта Expense
+        """
         if column in (1, 3):
             item = self.table.item(row, column)
-            new_value, ok = QInputDialog.getText(self, "Изменение значения", "Введите новое значение:",
-                                                 text=item.text())
-            if ok:
+            new_value, ok_dialog = QInputDialog.getText(self,
+                                                        "Изменение значения",
+                                                        "Введите новое значение:",
+                                                        text=item.text())
+            if ok_dialog:
                 self.expense_cell_changed.emit(row, column, new_value)
 
         elif column == 2:
             item = self.table.item(row, column)
-            new_value, ok = QInputDialog.getText(self, "Изменение значения", "Введите новое значение:",
-                                                 text=item.text())
-            if ok:
+            new_value, ok_dialog = QInputDialog.getText(self,
+                                                        "Изменение значения",
+                                                        "Введите новое значение:",
+                                                        text=item.text())
+            if ok_dialog:
                 try:
                     datetime.strptime(new_value, "%Y-%m-%d")
                     self.expense_cell_changed.emit(row, column, new_value)
@@ -122,23 +116,29 @@ class ExpensesListWidget(QWidget):
             item = self.table.item(row, column)
             self.category_cell_double_clicked.emit(row, column, item.text())
 
-    def _update_category_cell(self, row: int, column: int, categories: List[Tuple[int, str]]) -> None:
-        try:
-            combo_box = QComboBox()
-            self.categories = categories
-            combo_box.insertSeparator(0)
+    def update_category_cell(self,
+                             row: int,
+                             column: int,
+                             categories: List[Tuple[int, str]]) -> None:
+        """
+        Создаёт на месте ячейки QComboBox,
+        и заполняет его категориями
+        """
 
-            categories_sorted = sorted(categories, key=lambda x: x[0])
+        combo_box = QComboBox()
+        self.categories = categories
+        combo_box.insertSeparator(0)
 
-            combo_box.addItems([name for _, name in categories_sorted])
-            self.table.setCellWidget(row, column, combo_box)
+        categories_sorted = sorted(categories, key=lambda x: x[0])
 
-            combo_box.currentIndexChanged.connect(lambda index, row=row, column=column, categories=categories_sorted:
-                                                  self.category_cell_changed.emit(row, column,
-                                                                                  categories[index - 1][0]))
-            self.table.setCellWidget(row, column, combo_box)
-        except Exception as e:
-            print(f"Ошибка _update_category_cell: {e}")
+        combo_box.addItems([name for _, name in categories_sorted])
+        self.table.setCellWidget(row, column, combo_box)
+
+        combo_box.currentIndexChanged.connect(
+            lambda index, row=row, column=column, categories=categories_sorted:
+            self.category_cell_changed.emit(row, column, categories[index - 1][0]))
+
+        self.table.setCellWidget(row, column, combo_box)
 
     def delete_row(self) -> None:
         """
@@ -151,32 +151,17 @@ class ExpensesListWidget(QWidget):
         if index >= 0:
             self.delete_button_clicked.emit(index)
 
-    def filter_day(self) -> None:
-        """
-        заглушка
-        """
-        pass
-
-    def filter_week(self) -> None:
-        """
-        заглушка
-        """
-        pass
-
-    def filter_month(self) -> None:
-        """
-        заглушка
-        """
-        pass
-
 
 class EditableTableWidgetItem(QTableWidgetItem):
     """
-    QTableWidgetItem, который допускает редактирование
+    QTableWidgetItem, который допускает редактирование ячеек таблицы ExpenseListWidget
     """
 
     def __init__(self, text: str) -> None:
         super().__init__(text)
 
     def flags(self) -> Qt.ItemFlag:
+        """
+        Устанавливает флаги для ячеек таблицы
+        """
         return super().flags() | Qt.ItemFlag.ItemIsEditable

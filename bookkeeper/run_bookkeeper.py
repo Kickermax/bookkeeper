@@ -1,3 +1,7 @@
+"""
+Модуль содержит функцию main для запуска приложения Bookkeeper
+"""
+
 import sys
 
 from PyQt6.QtWidgets import QApplication
@@ -6,13 +10,18 @@ from bookkeeper.models.budget import Budget
 from bookkeeper.models.category import Category
 from bookkeeper.models.expense import Expense
 
-from bookkeeper.repository.memory_repository import MemoryRepository
 from bookkeeper.repository.sqlite_repository import SQLiteRepository
 
 from bookkeeper.bookkeeper_presenter import Presenter
 
 
 def main() -> None:
+    """
+    Запускает приложение бухгалтерского учета,
+    используя репозиторий SQLiteRepository для расходов, категорий и бюджетов.
+    Возможно использовать MemoryRepository, который работает с оперативной памятью
+    """
+
     # указываем репозиторий
     exp_repo = SQLiteRepository('budget.db', Expense)
     cat_repo = SQLiteRepository('budget.db', Category)

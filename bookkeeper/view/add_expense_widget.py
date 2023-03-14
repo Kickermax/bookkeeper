@@ -1,3 +1,7 @@
+"""
+Модуль содержит класс виджета добавления расхода
+для создания нового объекта Expense
+"""
 from typing import Any, List, Tuple
 
 from PyQt6.QtCore import pyqtSignal
@@ -78,9 +82,7 @@ class AddExpenseWidget(QWidget):
                     "Количество должно быть больше нуля!"
                 )
                 return message_box
-            else:
-                amount_str = "{:.2f}".format(amount)
-                print(amount_str)
+            amount_str = f"{amount:.2f}"
         except ValueError:
             message_box = QMessageBox.warning(
                 self,

@@ -93,7 +93,8 @@ class BudgetWidget(QWidget):
         layout.addWidget(expenses_group_box)
         self.setLayout(layout)
 
-        self.day_budget_edit.editingFinished.connect(lambda: self.update_day_budget(str(self.day_budget_edit.text())))
+        self.day_budget_edit.editingFinished.connect(
+            lambda: self.update_day_budget(str(self.day_budget_edit.text())))
         self.week_budget_edit.editingFinished.connect(
             lambda: self.update_week_budget(str(self.week_budget_edit.text())))
         self.month_budget_edit.editingFinished.connect(
@@ -118,34 +119,25 @@ class BudgetWidget(QWidget):
         """
         Метод для обновления бюджета за день
         """
-        try:
-            day_budget = float(value)
-            self.day_budget_edited.emit(day_budget)
-            self.day_budget_label.setText("{:.2f}".format(day_budget))
-        except ValueError as e:
-            print(e)
+        day_budget = float(value)
+        self.day_budget_edited.emit(day_budget)
+        self.day_budget_label.setText(f"{day_budget:.2f}")
 
     def update_week_budget(self, value: str) -> None:
         """
         Метод для обновления недельного бюджета
         """
-        try:
-            week_budget = float(value)
-            self.week_budget_edited.emit(week_budget)
-            self.week_budget_label.setText("{:.2f}".format(week_budget))
-        except ValueError as e:
-            print(e)
+        week_budget = float(value)
+        self.week_budget_edited.emit(week_budget)
+        self.week_budget_label.setText(f"{week_budget:.2f}")
 
     def update_month_budget(self, value: str) -> None:
         """
         Метод для обновления месячного бюджета
         """
-        try:
-            month_budget = float(value)
-            self.month_budget_edited.emit(month_budget)
-            self.month_budget_label.setText("{:.2f}".format(month_budget))
-        except ValueError as e:
-            print(e)
+        month_budget = float(value)
+        self.month_budget_edited.emit(month_budget)
+        self.month_budget_label.setText(f"{month_budget:.2f}")
 
     def update_expenses_labels(self, day_expenses: float,
                                week_expenses: float,
@@ -157,4 +149,3 @@ class BudgetWidget(QWidget):
         self.day_expenses_label.setText(f"Расходы за день: {day_expenses:.2f}")
         self.week_expenses_label.setText(f"Расходы за неделю: {week_expenses:.2f}")
         self.month_expenses_label.setText(f"Расходы за месяц: {month_expenses:.2f}")
-

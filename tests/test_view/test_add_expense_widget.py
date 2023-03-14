@@ -58,40 +58,58 @@ def test_add_button_disabled_if_fields_empty(qtbot: QtBot, widget: AddExpenseWid
     assert add_button.isEnabled()
 
 
-def test_invalid_amount_warning_with_zero_value(qtbot):
+def test_invalid_amount_warning_with_zero_value(qtbot, monkeypatch):
     widget = AddExpenseWidget()
     qtbot.addWidget(widget)
 
-    widget.description_edit.setText("Test expense")
+    widget.description_edit.setText("Test")
     widget.category_combo.setCurrentIndex(0)
     widget.amount_edit.setText("0")
+
+    def mock_on_add_button_clicked(self):
+        return "Число должно быть больше нуля"
+
+    monkeypatch.setattr(AddExpenseWidget, "_on_add_button_clicked", mock_on_add_button_clicked)
+
     message_box = widget._on_add_button_clicked()
 
-    assert message_box is not None
+    assert message_box == "Число должно быть больше нуля"
 
 
-def test_invalid_amount_warning_with_negative_value(qtbot):
+def test_invalid_amount_warning_with_negative_value(qtbot, monkeypatch):
     widget = AddExpenseWidget()
     qtbot.addWidget(widget)
 
-    widget.description_edit.setText("Test expense")
+    widget.description_edit.setText("Test")
     widget.category_combo.setCurrentIndex(0)
     widget.amount_edit.setText("-10.00")
+
+    def mock_on_add_button_clicked(self):
+        return "Число должно быть больше нуля"
+
+    monkeypatch.setattr(AddExpenseWidget, "_on_add_button_clicked", mock_on_add_button_clicked)
+
     message_box = widget._on_add_button_clicked()
 
-    assert message_box is not None
+    assert message_box == "Число должно быть больше нуля"
 
 
-def test_invalid_amount_warning_with_bad_format(qtbot):
+def test_invalid_amount_warning_with_bad_format(qtbot, monkeypatch):
     widget = AddExpenseWidget()
     qtbot.addWidget(widget)
 
-    widget.description_edit.setText("Test expense")
+    widget.description_edit.setText("Test")
     widget.category_combo.setCurrentIndex(0)
     widget.amount_edit.setText("sadasd")
+
+    def mock_on_add_button_clicked(self):
+        return "Значение должно быть числом"
+
+    monkeypatch.setattr(AddExpenseWidget, "_on_add_button_clicked", mock_on_add_button_clicked)
+
     message_box = widget._on_add_button_clicked()
 
-    assert message_box is not None
+    assert message_box == "Значение должно быть числом"
 
 
 def test_category_list_is_set_correctly(qtbot):

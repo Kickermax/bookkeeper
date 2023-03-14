@@ -15,10 +15,6 @@ from PyQt6.QtWidgets import (
 )
 
 
-class Signal:
-    pass
-
-
 class CategoryWidget(QWidget):
     """
     Виджет для отображения списка категорий.

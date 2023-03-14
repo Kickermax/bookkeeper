@@ -1,3 +1,6 @@
+"""
+Модуль содержит класс главного окна приложения Bookkeeper
+"""
 from PyQt6.QtWidgets import QMainWindow, QTabWidget
 from bookkeeper.view.expenses_list_widget import ExpensesListWidget
 from bookkeeper.view.budget_widget import BudgetWidget

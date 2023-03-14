@@ -65,7 +65,6 @@ class Budget:
         """
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         week_start = today - timedelta(days=today.weekday())
-        week_end = week_start + timedelta(days=6)
         existing_budgets = repo.get_all({'term': week_start, 'period': 'week'})
         if existing_budgets:
             return existing_budgets[0]
