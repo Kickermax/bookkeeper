@@ -434,13 +434,13 @@ class Presenter:
         total_amount_month: float = sum(float(expense.amount)
                                         for expense in month_expenses)
 
-        days_since_monday: int = today.isoweekday() - 1
-        week_start: datetime = (today - timedelta(days=days_since_monday)).replace(
-            hour=0, minute=0, second=0, microsecond=0)
-        week_expenses: List[Expense] = self.exp_repo.get_all(
-            {'strftime("%Y-%m-%d", expense_date)': str(week_start.date())})
-        total_amount_week: float = sum(float(expense.amount)
-                                       for expense in week_expenses)
+        week_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(
+            days=datetime.now().weekday())
+        week_dates = [(week_start + timedelta(days=i)).strftime('%Y-%m-%d') for i in range(7)]
+        week_expenses = [self.exp_repo.get_all(where={'strftime("%Y-%m-%d", expense_date)': date_str}) for date_str in
+                         week_dates]
+        total_amount_week = sum(
+            sum(float(expense.amount) for expense in day_expenses) for day_expenses in week_expenses)
 
         day_expenses: float = total_amount_today
 
