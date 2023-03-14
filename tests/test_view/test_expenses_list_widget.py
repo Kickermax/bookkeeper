@@ -85,15 +85,3 @@ def test_delete_row(expenses_list_widget, qtbot):
     expenses_list_widget.update_table(expenses)
 
     assert expenses_list_widget.table.rowCount() == 1
-
-
-
-
-
-
-
-
-
-
-
-

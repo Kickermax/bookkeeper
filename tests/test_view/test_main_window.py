@@ -42,5 +42,3 @@ def test_qtab_widget(qtab_widget, qtbot):
 
     qtab_widget.setCurrentIndex(0)
     assert qtab_widget.currentWidget() == qtab_widget.widget(0)
-
-
